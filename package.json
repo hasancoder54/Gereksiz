@@ -1,0 +1,14 @@
+{
+  "name": "vercel-galeri",
+  "version": "1.0.0",
+  "description": "Herkese açık resim galerisi",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static build'",
+    "deploy": "vercel --prod"
+  },
+  "keywords": ["galeri", "firebase", "vercel", "photos"],
+  "author": "Your Name",
+  "license": "MIT"
+}

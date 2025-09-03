@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herkese Açık Galeri</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 10px;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .stats {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .stat-item {
+            padding: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .gallery-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+        }
+        
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+        
+        .gallery-item .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white;
+            padding: 15px 10px 10px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .gallery-item:hover .overlay {
+            transform: translateY(0);
+        }
+        
+        .upload-area {
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .upload-area:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        .upload-area input {
+            display: none;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            animation: fadeIn 0.3s;
+        }
+        
+        .modal-content {
+            display: block;
+            margin: auto;
+            max-width: 90%;
+            max-height: 80%;
+            margin-top: 10%;
+            border-radius: 10px;
+            animation: zoomIn 0.3s;
+        }
+        
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #ccc;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            color: white;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes zoomIn {
+            from { transform: scale(0.8); }
+            to { transform: scale(1); }
+        }
+        
+        .error-msg {
+            background: rgba(255, 0, 0, 0.2);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        @media (max-width: 480px) {
+            .gallery {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .modal-content {
+                max-width: 95%;
+                margin-top: 20%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 Herkese Açık Galeri</h1>
+        
+        <div class="stats">
+            <p>📊 Galeri İstatistikleri</p>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <strong id="totalImages">0</strong><br>
+                    <small>Resim</small>
+                </div>
+                <div class="stat-item">
+                    <strong id="totalViews">0</strong><br>
+                    <small>Görüntüleme</small>
+                </div>
+                <div class="stat-item">
+                    <strong id="onlineUsers">1</strong><br>
+                    <small>Çevrimiçi</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">📷</div>
+            <p>Resim Yükle & Paylaş</p>
+            <small>Herkes görecek • Max 5MB</small>
+            <input type="file" id="fileInput" accept="image/*" multiple>
+        </div>
+        
+        <div class="error-msg" id="errorMsg"></div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Resimler yükleniyor...</p>
+        </div>
+        
+        <div class="gallery" id="gallery">
+            <!-- Resimler buraya yüklenecek -->
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div id="myModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImg">
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-storage-compat.min.js"></script>
+    
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDquBZcOk1jDXyjRGw_a6FE71VvPXr7QE4",
+            authDomain: "vercelgaleri.firebaseapp.com",
+            projectId: "vercelgaleri",
+            storageBucket: "vercelgaleri.firebasestorage.app",
+            messagingSenderId: "250825104668",
+            appId: "1:250825104668:web:9c9dd452d8b14ee2a76ed9"
+        };
+
+        // Firebase başlat
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        class PublicGallery {
+            constructor() {
+                this.images = [];
+                this.totalViews = 0;
+                this.init();
+            }
+
+            async init() {
+                await this.loadImages();
+                this.setupRealtimeUpdates();
+                this.updateStats();
+            }
+
+            // Resimleri Firestore'dan yükle
+            async loadImages() {
+                try {
+                    const snapshot = await db.collection('gallery').orderBy('uploadDate', 'desc').get();
+                    this.images = [];
+                    const gallery = document.getElementById('gallery');
+                    gallery.innerHTML = '';
+
+                    snapshot.forEach(doc => {
+                        const imageData = { id: doc.id, ...doc.data() };
+                        this.images.push(imageData);
+                        this.createGalleryItem(imageData);
+                    });
+
+                } catch (error) {
+                    this.showError('Resimler yüklenirken hata: ' + error.message);
+                }
+            }
+
+            // Realtime güncellemeler için listener
+            setupRealtimeUpdates() {
+                db.collection('gallery').onSnapshot((snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === 'added') {
+                            const imageData = { id: change.doc.id, ...change.doc.data() };
+                            if (!this.images.find(img => img.id === imageData.id)) {
+                                this.images.unshift(imageData);
+                                this.createGalleryItem(imageData, true);
+                            }
+                        }
+                    });
+                    this.updateStats();
+                });
+            }
+
+            // Galeri öğesi oluştur
+            createGalleryItem(imageData, prepend = false) {
+                const gallery = document.getElementById('gallery');
+                const galleryItem = document.createElement('div');
+                galleryItem.className = 'gallery-item';
+
+                const uploadDate = new Date(imageData.uploadDate).toLocaleDateString('tr-TR');
+                
+                galleryItem.innerHTML = `
+                    <img src="${imageData.imageUrl}" alt="${imageData.filename}" loading="lazy">
+                    <div class="overlay">
+                        <p>${imageData.filename}</p>
+                        <small>📅 ${uploadDate} • 👁 ${imageData.views || 0}</small>
+                    </div>
+                `;
+
+                galleryItem.onclick = () => {
+                    this.openModal(imageData);
+                    this.incrementViews(imageData.id);
+                };
+
+                if (prepend) {
+                    gallery.prepend(galleryItem);
+                } else {
+                    gallery.appendChild(galleryItem);
+                }
+            }
+
+            // Resim yükle
+            async uploadImage(file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    this.showError('Dosya çok büyük! Max 5MB');
+                    return;
+                }
+
+                const loading = document.getElementById('loading');
+                loading.style.display = 'block';
+
+                try {
+                    // Storage'a yükle
+                    const filename = `${Date.now()}_${file.name}`;
+                    const storageRef = storage.ref(`images/${filename}`);
+                    const uploadTask = storageRef.put(file);
+
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            // Progress tracking
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            console.log('Upload progress:', progress);
+                        },
+                        (error) => {
+                            loading.style.display = 'none';
+                            this.showError('Yükleme hatası: ' + error.message);
+                        },
+                        async () => {
+                            // Upload tamamlandı
+                            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                            
+                            // Firestore'a kaydet
+                            await db.collection('gallery').add({
+                                filename: file.name,
+                                imageUrl: downloadURL,
+                                uploadDate: new Date().toISOString(),
+                                views: 0,
+                                size: file.size
+                            });
+
+                            loading.style.display = 'none';
+                            this.showSuccess('Resim başarıyla yüklendi!');
+                        }
+                    );
+
+                } catch (error) {
+                    loading.style.display = 'none';
+                    this.showError('Yükleme hatası: ' + error.message);
+                }
+            }
+
+            // Görüntüleme sayısını artır
+            async incrementViews(imageId) {
+                try {
+                    const imageRef = db.collection('gallery').doc(imageId);
+                    await imageRef.update({
+                        views: firebase.firestore.FieldValue.increment(1)
+                    });
+                } catch (error) {
+                    console.error('Views güncellenemedi:', error);
+                }
+            }
+
+            // İstatistikleri güncelle
+            updateStats() {
+                const totalViews = this.images.reduce((sum, img) => sum + (img.views || 0), 0);
+                document.getElementById('totalImages').textContent = this.images.length;
+                document.getElementById('totalViews').textContent = totalViews;
+            }
+
+            // Modal aç
+            openModal(imageData) {
+                const modal = document.getElementById('myModal');
+                const modalImg = document.getElementById('modalImg');
+                modal.style.display = 'block';
+                modalImg.src = imageData.imageUrl;
+            }
+
+            // Hata göster
+            showError(message) {
+                const errorMsg = document.getElementById('errorMsg');
+                errorMsg.textContent = message;
+                errorMsg.style.display = 'block';
+                setTimeout(() => {
+                    errorMsg.style.display = 'none';
+                }, 5000);
+            }
+
+            // Başarı mesajı
+            showSuccess(message) {
+                const errorMsg = document.getElementById('errorMsg');
+                errorMsg.textContent = message;
+                errorMsg.style.background = 'rgba(0, 255, 0, 0.2)';
+                errorMsg.style.display = 'block';
+                setTimeout(() => {
+                    errorMsg.style.display = 'none';
+                    errorMsg.style.background = 'rgba(255, 0, 0, 0.2)';
+                }, 3000);
+            }
+        }
+
+        // Galeri başlat
+        const gallery = new PublicGallery();
+
+        // File input event
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = e.target.files;
+            for (let i = 0; i < files.length; i++) {
+                if (files[i].type.startsWith('image/')) {
+                    gallery.uploadImage(files[i]);
+                }
+            }
+            this.value = ''; // Input'u temizle
+        });
+
+        // Modal kapatma
+        function closeModal() {
+            document.getElementById('myModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('myModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
